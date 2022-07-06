@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib import messages
 from django.conf import settings
+
 from .forms import OrderForm
 from .models import Order, OrderLineItem
 from products.models import Product
@@ -36,24 +37,24 @@ def checkout(request):
                     if isinstance(item_data, int):
                         order_line_item = OrderLineItem(
                             order=order,
-                            quantity=item_data,
                             product=product,
+                            quantity=item_data,
                         )
                         order_line_item.save()
                     else:
                         for size, quantity in item_data['items_by_size'].items():
                             order_line_item = OrderLineItem(
                                 order=order,
-                                quantity=item_data,
                                 product=product,
+                                quantity=quantity,
                                 product_size=size,
                             )
-                        order_line_item.save()
+                            order_line_item.save()
                 except Product.DoesNotExist:
                     messages.error(request, (
-                        "One of the procucts in your bag wasn't found in our database. "
-                        "Please call us for assistance!"
-                    ))
+                        "One of the products in your bag wasn't found in our database. "
+                        "Please call us for assistance!")
+                    )
                     order.delete()
                     return redirect(reverse('view_bag'))
 
@@ -80,7 +81,7 @@ def checkout(request):
         order_form = OrderForm()
 
     if not stripe_public_key:
-        messages.warning(request, 'Stripe ppublic key is missing. \
+        messages.warning(request, 'Stripe public key is missing. \
             Did you forget to set it in your environment?')
 
     template = 'checkout/checkout.html'
@@ -101,7 +102,7 @@ def checkout_success(request, order_number):
     order = get_object_or_404(Order, order_number=order_number)
     messages.success(request, f'Order successfully processed! \
         Your order number is {order_number}. A confirmation \
-            email will be sent to {order.email}.')
+        email will be sent to {order.email}.')
 
     if 'bag' in request.session:
         del request.session['bag']
